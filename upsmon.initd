@@ -1,0 +1,46 @@
+#!/sbin/openrc-run
+# Network UPS Tools - Monitor daemon
+
+name="NUT Monitor"
+description="Network UPS Tools monitoring daemon (upsmon)"
+command="/usr/bin/upsmon"
+pidfile="/run/nut/upsmon.pid"
+user="nut"
+group="nut"
+
+depend() {
+    need upsd
+    use logger
+}
+
+start_pre() {
+    checkpath --directory --owner ${user}:${group} --mode 0755 /run/nut
+    checkpath --directory --owner ${user}:${group} --mode 0755 /var/lib/nut
+    
+    # Check if upsd is running
+    if ! pgrep -f "upsd" >/dev/null; then
+        eerror "upsd is not running. Start upsd first."
+        return 1
+    fi
+}
+
+start() {
+    ebegin "Starting ${name}"
+    start-stop-daemon --start --quiet \
+        --pidfile "${pidfile}" \
+        --user "${user}" --group "${group}" \
+        --exec "${command}" -- -p
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping ${name}"
+    start-stop-daemon --stop --quiet --pidfile "${pidfile}"
+    eend $?
+}
+
+reload() {
+    ebegin "Reloading ${name}"
+    start-stop-daemon --signal HUP --pidfile "${pidfile}"
+    eend $?
+}

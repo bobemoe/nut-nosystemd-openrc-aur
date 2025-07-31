@@ -1,0 +1,68 @@
+#!/sbin/openrc-run
+# Network UPS Tools - Main service controller
+
+name="Network UPS Tools"
+description="UPS drivers, server and monitoring"
+
+depend() {
+    need localmount
+    use logger
+    after bootmisc
+}
+
+start() {
+    ebegin "Starting NUT drivers"
+    /usr/bin/upsdrvctl start >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        eend 0
+        
+        ebegin "Starting NUT server (upsd)"
+        start-stop-daemon --start --quiet --pidfile /run/nut/upsd.pid \
+            --exec /usr/bin/upsd -- >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            eend 0
+            
+            ebegin "Starting NUT monitor (upsmon)"
+            start-stop-daemon --start --quiet --pidfile /run/nut/upsmon.pid \
+                --exec /usr/bin/upsmon -- >/dev/null 2>&1
+            eend $?
+        else
+            eend 1 "Failed to start upsd"
+            return 1
+        fi
+    else
+        eend 1 "Failed to start UPS drivers"
+        return 1
+    fi
+}
+
+stop() {
+    ebegin "Stopping NUT monitor (upsmon)"
+    start-stop-daemon --stop --quiet --pidfile /run/nut/upsmon.pid
+    eend $?
+    
+    ebegin "Stopping NUT server (upsd)"
+    start-stop-daemon --stop --quiet --pidfile /run/nut/upsd.pid
+    eend $?
+    
+    ebegin "Stopping NUT drivers"
+    /usr/bin/upsdrvctl stop >/dev/null 2>&1
+    eend $?
+}
+
+restart() {
+    stop
+    sleep 2
+    start
+}
+
+status() {
+    if [ -f /run/nut/upsd.pid ] && [ -f /run/nut/upsmon.pid ]; then
+        if pgrep -f "upsd" >/dev/null && pgrep -f "upsmon" >/dev/null; then
+            einfo "NUT is running"
+            return 0
+        fi
+    fi
+    einfo "NUT is not running"
+    return 1
+}

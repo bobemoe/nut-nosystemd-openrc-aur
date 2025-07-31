@@ -1,0 +1,59 @@
+post_install() {
+    # Create nut user and group
+    if ! getent group nut >/dev/null 2>&1; then
+        groupadd -r nut
+    fi
+    
+    if ! getent passwd nut >/dev/null 2>&1; then
+        useradd -r -g nut -d /var/lib/nut -s /sbin/nologin \
+            -c "Network UPS Tools" nut
+    fi
+    
+    # Set up directories and permissions
+    chown -R nut:nut /var/lib/nut /run/nut 2>/dev/null || true
+    chmod 750 /var/lib/nut 2>/dev/null || true
+    chmod 755 /run/nut 2>/dev/null || true
+    
+    # Set proper ownership on config files
+    chown root:nut /etc/nut/{nut.conf,ups.conf,upsd.conf,upsd.users} 2>/dev/null || true
+    chmod 640 /etc/nut/{nut.conf,ups.conf,upsd.conf,upsd.users} 2>/dev/null || true
+    chmod 644 /etc/nut/{upsmon.conf,upssched.conf,hosts.conf} 2>/dev/null || true
+    
+    # Add nut user to necessary groups for USB access
+    usermod -a -G uucp,lock nut 2>/dev/null || true
+    
+    echo ""
+    echo "==> Network UPS Tools has been installed without systemd support."
+    echo "==> To start NUT services with OpenRC:"
+    echo "    sudo rc-update add nut default"
+    echo "    sudo rc-service nut start"
+    echo ""
+    echo "==> Configuration files are in /etc/nut/"
+    echo "==> Edit /etc/nut/ups.conf to configure your UPS"
+    echo "==> Edit /etc/nut/nut.conf and set MODE=standalone"
+    echo ""
+    echo "==> For more information, see:"
+    echo "    https://networkupstools.org/docs/user-manual.chunked/Configuration_notes.html"
+    echo ""
+}
+
+post_upgrade() {
+    post_install
+    
+    echo "==> Please restart NUT services after upgrade:"
+    echo "    sudo rc-service nut restart"
+}
+
+pre_remove() {
+    # Stop services before removal
+    rc-service nut stop 2>/dev/null || true
+    rc-update del nut default 2>/dev/null || true
+}
+
+post_remove() {
+    # Clean up user and group (optional)
+    echo "==> The 'nut' user and group have been left on the system."
+    echo "==> To remove them manually:"
+    echo "    sudo userdel nut"
+    echo "    sudo groupdel nut"
+}

@@ -1,0 +1,48 @@
+#!/sbin/openrc-run
+# Network UPS Tools - Server daemon
+
+name="NUT Server"
+description="Network UPS Tools server daemon (upsd)"
+command="/usr/bin/upsd"
+pidfile="/run/nut/upsd.pid"
+user="nut"
+group="nut"
+
+depend() {
+    need localmount
+    use logger
+    after bootmisc
+}
+
+start_pre() {
+    checkpath --directory --owner ${user}:${group} --mode 0755 /run/nut
+    checkpath --directory --owner ${user}:${group} --mode 0755 /var/lib/nut
+    
+    # Ensure drivers are running first
+    if ! pgrep -f "/usr/lib/nut/" >/dev/null; then
+        ebegin "Starting UPS drivers first"
+        /usr/bin/upsdrvctl start >/dev/null 2>&1
+        eend $?
+    fi
+}
+
+start() {
+    ebegin "Starting ${name}"
+    start-stop-daemon --start --quiet \
+        --pidfile "${pidfile}" \
+        --user "${user}" --group "${group}" \
+        --exec "${command}"
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping ${name}"
+    start-stop-daemon --stop --quiet --pidfile "${pidfile}"
+    eend $?
+}
+
+reload() {
+    ebegin "Reloading ${name}"
+    start-stop-daemon --signal HUP --pidfile "${pidfile}"
+    eend $?
+}
