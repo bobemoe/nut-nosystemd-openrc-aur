@@ -47,7 +47,7 @@ sudo rc-service nut status
 
 ## Installation
 
-Install from AUR using your preferred AUR helper or manually:
+Install from AUR using your preferred AUR helper (not submitted yet) or manually:
 
 ```bash
 git clone https://github.com/bobemoe/nut-nosystemd-openrc-aur
