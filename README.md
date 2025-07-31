@@ -50,8 +50,8 @@ sudo rc-service nut status
 Install from AUR using your preferred AUR helper or manually:
 
 ```bash
-git clone https://aur.archlinux.org/nut-nosystemd-openrc.git
-cd nut-nosystemd-openrc
+git clone https://github.com/bobemoe/nut-nosystemd-openrc-aur
+cd nut-nosystemd-openrc-aur
 makepkg -si
 ```
 
