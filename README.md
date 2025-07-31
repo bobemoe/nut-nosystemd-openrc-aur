@@ -61,4 +61,4 @@ makepkg -si
 - [Network UPS Tools project](https://networkupstools.org/) for the excellent UPS monitoring software
 - Original NUT maintainers and contributors
 
-For usage, configuration, and troubleshooting, refer to the [official NUT documentation](https://networkupstools.org/docs/).
+For usage, configuration, and troubleshooting, refer to the [official NUT documentation](https://networkupstools.org/documentation.html).
